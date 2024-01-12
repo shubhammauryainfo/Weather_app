@@ -4,9 +4,9 @@
 
 ### This  web project done in html,css ,js
 
-#### Vercel link
+#### Vercel link / preview Link
  
- https://spweather.netlify.app/
+ https://munda-weather-app.vercel.app/
  
 ### Features of the project.
 
