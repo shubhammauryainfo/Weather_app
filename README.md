@@ -19,7 +19,7 @@
 * a good  ux/ui 
 
 
-### Snapshot
+### Screenshot
 
 * Default 
 <img src="ss/demo1.png" width="100%">

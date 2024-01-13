@@ -28,10 +28,10 @@ a{
   margin: 50px auto;
   padding: 20px;
   text-align: center;
-  border-radius: 37px 0 37px 0;
+  border-radius: 31px;
   background: linear-gradient(145deg, #cacaca, #f0f0f0);
-  box-shadow:  9px 9px 18px #8d8c8c,
-               -9px -9px 18px #d6d5d5;
+  box-shadow:  8px 8px 16px #d3d3d3,
+               -8px -8px 16px #ededed;
 }
 .app-main > * {
   margin-bottom: 12px;
