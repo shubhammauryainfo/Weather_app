@@ -32,10 +32,10 @@ function getWeatherReport(city) {
 function showWeaterReport(weather) {
     let city_code=weather.cod;
     if(city_code==='400'){ 
-        swal("Empty Input", "Please enter any city", "error");
+        swal("Empty Input", "Please Enter any city", "error");
         reset();
     }else if(city_code==='404'){
-        swal("Bad Input", "entered city didn't matched", "warning");
+        swal("Bad Input", "Entered city didn't matched", "warning");
         reset();
     }
     else{
