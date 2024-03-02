@@ -1,158 +1,87 @@
-
-//making object of weatherapi
-const weatherApi = {
-    key: '9f23b56e8dcad8299bf4e5a2a3fc932b',
-    baseUrl: 'https://api.openweathermap.org/data/2.5/weather'
-}
-
-//anonymous function
-//adding event listener key press of enter
-let searchInputBox = document.getElementById('input-box');
-searchInputBox.addEventListener('keypress', (event) => {
-    if (event.keyCode == 13) {
-        // console.log(searchInputBox.value);
-        getWeatherReport(searchInputBox.value);
-        
+document.getElementById('city').addEventListener('input', function () {
+    var city = this.value;
+    getWeather(city);
+  });
+  
+  async function getWeather() {
+    try {
+        var city = document.getElementById('city').value;
+        console.log('Şəhər adı:', city);
+  
+        const response = await axios.get('https://api.openweathermap.org/data/2.5/forecast', {
+            params: {
+                q: city,
+                appid: '54a57bc234ad752a4f59e59cd372201d',
+                units: 'metric'
+            },
+        });
+        const currentTemperature = response.data.list[0].main.temp;
+  
+        document.querySelector('.weather-temp').textContent = Math.round(currentTemperature) + 'ºC';
+  
+        const forecastData = response.data.list;
+  
+        const dailyForecast = {};
+        forecastData.forEach((data) => {
+            const day = new Date(data.dt * 1000).toLocaleDateString('en-US', { weekday: 'long' });
+            if (!dailyForecast[day]) {
+                dailyForecast[day] = {
+                    minTemp: data.main.temp_min,
+                    maxTemp: data.main.temp_max,
+                    description: data.weather[0].description,
+                    humidity: data.main.humidity,
+                    windSpeed: data.wind.speed,
+                    icon: data.weather[0].icon,
+  
+  
+                };
+            } else {
+                dailyForecast[day].minTemp = Math.min(dailyForecast[day].minTemp, data.main.temp_min);
+                dailyForecast[day].maxTemp = Math.max(dailyForecast[day].maxTemp, data.main.temp_max);
+            }
+        });
+  
+        document.querySelector('.date-dayname').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  
+        const date = new Date().toUTCString();
+        const extractedDateTime = date.slice(5, 16);
+        document.querySelector('.date-day').textContent = extractedDateTime.toLocaleString('en-US');
+  
+        const currentWeatherIconCode = dailyForecast[new Date().toLocaleDateString('en-US', { weekday: 'long' })].icon;
+        const weatherIconElement = document.querySelector('.weather-icon');
+        weatherIconElement.innerHTML = getWeatherIcon(currentWeatherIconCode);
+  
+        document.querySelector('.location').textContent = response.data.city.name;
+        document.querySelector('.weather-desc').textContent = dailyForecast[new Date().toLocaleDateString('en-US', { weekday: 'long' })].description.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  
+        document.querySelector('.humidity .value').textContent = dailyForecast[new Date().toLocaleDateString('en-US', { weekday: 'long' })].humidity + ' %';
+        document.querySelector('.wind .value').textContent = dailyForecast[new Date().toLocaleDateString('en-US', { weekday: 'long' })].windSpeed + ' m/s';
+  
+  
+        const dayElements = document.querySelectorAll('.day-name');
+        const tempElements = document.querySelectorAll('.day-temp');
+        const iconElements = document.querySelectorAll('.day-icon');
+  
+        dayElements.forEach((dayElement, index) => {
+            const day = Object.keys(dailyForecast)[index];
+            const data = dailyForecast[day];
+            dayElement.textContent = day;
+            tempElements[index].textContent = `${Math.round(data.minTemp)}º / ${Math.round(data.maxTemp)}º`;
+            iconElements[index].innerHTML = getWeatherIcon(data.icon);
+        });
+  
+    } catch (error) {
+        console.error('Məlumat alınarkən səhv baş verdi:', error.message);
     }
-})
-
-
-//get waether report
-
-function getWeatherReport(city) {
-    fetch(`${weatherApi.baseUrl}?q=${city}&appid=${weatherApi.key}&units=metric`)  // fetch method fetching the data from  base url ...metric is used for unit in celcius......here i am appending the base url to get data by city name .  
-        .then(weather => {   //weather is from api
-            return weather.json(); // return data from api in JSON
-        }).then(showWeaterReport);  // calling showweatherreport function
-
-}
-
-//show weather report
-
-function showWeaterReport(weather) {
-    let city_code=weather.cod;
-    if(city_code==='400'){ 
-        swal("Empty Input", "Please Enter any city", "error");
-        reset();
-    }else if(city_code==='404'){
-        swal("Bad Input", "Entered city didn't matched", "warning");
-        reset();
-    }
-    else{
-
-    // console.log(weather.cod);
-    // console.log(weather);  
-    let op = document.getElementById('weather-body');
-    op.style.display = 'block';
-    let todayDate = new Date();
-    let parent=document.getElementById('parent');
-    let weather_body = document.getElementById('weather-body');
-    weather_body.innerHTML =
-        `
-    <div class="location-deatils">
-        <div class="city" id="city">${weather.name}, ${weather.sys.country}</div>
-        <div class="date" id="date"> ${dateManage(todayDate)}</div>
-    </div>
-    <div class="weather-status">
-        <div class="temp" id="temp">${Math.round(weather.main.temp)}&deg;C </div>
-        <div class="weather" id="weather"> ${weather.weather[0].main} <i class="${getIconClass(weather.weather[0].main)}"></i>  </div>
-        <div class="min-max" id="min-max">${Math.floor(weather.main.temp_min)}&deg;C (min) / ${Math.ceil(weather.main.temp_max)}&deg;C (max) </div>
-        <div id="updated_on">Updated as of ${getTime(todayDate)}</div>
-    </div>
-    <hr>
-    <div class="day-details">
-        <div class="basic">Feels like ${weather.main.feels_like}&deg;C | Humidity ${weather.main.humidity}%  <br> Pressure ${weather.main.pressure} mb | Wind ${weather.wind.speed} KMPH</div>
-    </div>
-    `;
-    parent.append(weather_body);
-    changeBg(weather.weather[0].main);
-    reset();
-    }
-}
-
-
-
-//making a function for the  last update current time 
-
-function getTime(todayDate) {
-    let hour =addZero(todayDate.getHours());
-    let minute =addZero(todayDate.getMinutes());
-    return `${hour}:${minute}`;
-}
-
-//date manage for return  current date
-function dateManage(dateArg) {
-    let days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-    let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-    let year = dateArg.getFullYear();
-    let month = months[dateArg.getMonth()];
-    let date = dateArg.getDate();
-    let day = days[dateArg.getDay()];
-    // console.log(year+" "+date+" "+day+" "+month);
-    return `${date} ${month} (${day}) , ${year}`
-}
-const bgimg = document.querySelector("#bgimg");
-// function for the dynamic background change  according to weather status
-function changeBg(status) {
-    if (status === 'Clouds') {
-       bgimg.style.backgroundImage = 'url(img/clouds.jpg)';
-    } else if (status === 'Rain') {
-       bgimg.style.backgroundImage = 'url(img/rainy.jpg)';
-    } else if (status === 'Clear') {
-       bgimg.style.backgroundImage = 'url(img/clear.jpg)';
-    }
-    else if (status === 'Snow') {
-       bgimg.style.backgroundImage = 'url(img/snow.jpg)';
-    }
-    else if (status === 'Sunny') {
-       bgimg.style.backgroundImage = 'url(img/sunny.jpg)';
-    } else if (status === 'Thunderstorm') {
-       bgimg.style.backgroundImage = 'url(img/thunderstrom.jpg)';
-    } else if (status === 'Drizzle') {
-       bgimg.style.backgroundImage = 'url(img/drizzle.jpg)';
-    } else if (status === 'Mist' || status === 'Haze' || status === 'Fog') {
-       bgimg.style.backgroundImage = 'url(img/mist.jpg)';
-    }
-    else if (status === 'Smoke' || status === 'Haze' || status === 'Smoke') {
-    bgimg.style.backgroundImage = 'url(img/smoke.jpg)';
-    }
-    else {
-       bgimg.style.backgroundImage = 'url(img/bg1.jpg)';
-    }
-}
-
-//making a function for the classname of icon
-function getIconClass(classarg) {
-    if (classarg === 'Rain') {
-        return 'fas fa-cloud-showers-heavy';
-    } else if (classarg === 'Clouds') {
-        return 'fas fa-cloud';
-    } else if (classarg === 'Clear') {
-        return 'fas fa-cloud-sun';
-    } else if (classarg === 'Snow') {
-        return 'fas fa-snowman';
-    } else if (classarg === 'Sunny') {
-        return 'fas fa-sun';
-    } else if (classarg === 'Mist') {
-        return 'fas fa-smog';
-    } else if (classarg === 'Thunderstorm' || classarg === 'Drizzle') {
-        return 'fas fa-thunderstorm';
-    } else {
-        return 'fas fa-cloud-sun';
-    }
-}
-
-function reset() {
-    let input = document.getElementById('input-box');
-    input.value = "";
-}
-
-// funtion to add zero if hour and minute less than 10
-function addZero(i) {
-    if (i < 10) {
-        i = "0" + i;
-    }
-    return i;
-}
+  }
+  
+  function getWeatherIcon(iconCode) {
+    const iconBaseUrl = 'https://openweathermap.org/img/wn/';
+    const iconSize = '@2x.png';
+    return `<img src="${iconBaseUrl}${iconCode}${iconSize}" alt="Weather Icon">`;
+  }
+  
+  document.addEventListener("DOMContentLoaded", function () {
+    getWeather();
+    setInterval(getWeather, 900000);
+  });
